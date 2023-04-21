@@ -102,7 +102,7 @@ func invokeSSMCommand(cmd *cobra.Command, args []string) error {
 		}
 		time.Sleep(500 * time.Millisecond)
 		if i >= 10 {
-			return fmt.Errorf("%v port %v is not open\n", localHostName, localPort)
+			return fmt.Errorf("%v port %v is not open", localHostName, localPort)
 		}
 	}
 	fmt.Printf("Start listening %v:%v\n", localHostName, localPort)
