@@ -3,10 +3,7 @@ package cmd
 import (
 	"errors"
 	"fmt"
-	"net"
 	"os"
-	"strconv"
-	"time"
 
 	"github.com/spf13/cobra"
 	"github.com/stknohg/ec2rdp/internal/aws"
@@ -100,17 +97,6 @@ func invokePublicCommand(cmd *cobra.Command, args []string) error {
 
 	// connect
 	return connectPublicInstance(hostName, publicPort, publicUserName, password, !publicNoWait)
-}
-
-func isPortOpen(hostName string, port int) bool {
-	conn, err := net.DialTimeout("tcp", net.JoinHostPort(hostName, strconv.Itoa(port)), time.Second)
-	if err != nil {
-		return false
-	}
-	if conn == nil {
-		return false
-	}
-	return true
 }
 
 func connectPublicInstance(hostName string, port int, userName string, plainPassword string, waitFor bool) error {

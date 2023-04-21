@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/exec"
 	"strconv"
+	"time"
 
 	"github.com/spf13/cobra"
 	"github.com/stknohg/ec2rdp/internal/aws"
@@ -93,6 +94,16 @@ func invokeSSMCommand(cmd *cobra.Command, args []string) error {
 	result, err := ssm.StartSSMSessionPortForward(cfg, ssmInstanceId, ssmPort, localPort, ssmProfileName)
 	if err != nil {
 		return err
+	}
+	fmt.Printf("Start listening %v:%v\n", localHostName, localPort)
+	for i := 1; ; i++ {
+		if isPortOpen(localHostName, localPort) {
+			break
+		}
+		time.Sleep(500 * time.Millisecond)
+		if i >= 10 {
+			return fmt.Errorf("%v port %v is not open\n", localHostName, localPort)
+		}
 	}
 
 	// get administrator password
