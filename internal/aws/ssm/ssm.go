@@ -45,15 +45,25 @@ func IsInstanceOnline(cfg aws.Config, instanceId string) (bool, error) {
 	return false, fmt.Errorf("instance %v is not online. (SSM PingStatus : %v)", instanceId, status)
 }
 
-func StartSSMSessionWithPlugin(cfg aws.Config, instanceId string, port int, localPort int, profileName string) (*StartSSMSessionPluginResult, error) {
+func StartSSMSessionPortForward(cfg aws.Config, instanceId string, port int, localPort int, profileName string) (*StartSSMSessionPluginResult, error) {
+	return StartSSMSessionWithPlugin(
+		cfg,
+		instanceId,
+		"AWS-StartPortForwardingSession",
+		map[string][]string{"portNumber": {strconv.Itoa(port)}, "localPortNumber": {strconv.Itoa(localPort)}},
+		"ec2rdp ssm",
+		profileName)
+}
+
+func StartSSMSessionWithPlugin(cfg aws.Config, target string, documentName string, parameters map[string][]string, reason string, profileName string) (*StartSSMSessionPluginResult, error) {
 	client := ssm.NewFromConfig(cfg)
 
 	// start session
 	input := &ssm.StartSessionInput{
-		Target:       &instanceId,
-		DocumentName: aws.String("AWS-StartPortForwardingSession"),
-		Parameters:   map[string][]string{"portNumber": {strconv.Itoa(port)}, "localPortNumber": {strconv.Itoa(localPort)}},
-		Reason:       aws.String("ec2rdp ssm"),
+		Target:       &target,
+		DocumentName: &documentName,
+		Parameters:   parameters,
+		Reason:       &reason,
 	}
 	result, err := client.StartSession(context.TODO(), input)
 	if err != nil {
@@ -72,7 +82,7 @@ func StartSSMSessionWithPlugin(cfg aws.Config, instanceId string, port int, loca
 	// arg4
 	arg4 := profileName
 	// arg5
-	pluginParameter := &sessionManagerPluginParameter{Target: instanceId, Parameters: input.Parameters}
+	pluginParameter := &sessionManagerPluginParameter{Target: target, Parameters: input.Parameters}
 	parameterJson, _ := json.Marshal(pluginParameter)
 	arg5 := string(parameterJson)
 	// arg6

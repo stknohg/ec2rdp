@@ -89,8 +89,8 @@ func invokeSSMCommand(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
-	// start SSM Session Manager Pluin
-	result, err := ssm.StartSSMSessionWithPlugin(cfg, ssmInstanceId, ssmPort, localPort, ssmProfileName)
+	// start port forwarding with SSM Session Manager Plugin
+	result, err := ssm.StartSSMSessionPortForward(cfg, ssmInstanceId, ssmPort, localPort, ssmProfileName)
 	if err != nil {
 		return err
 	}
