@@ -66,7 +66,7 @@ PS C:\> ec2rdp public -i i-01234567890abcdef -p C:\project\example.pem --profile
 You can override RDP connection settings by `--port`, `--user`, `--password` parameters.
 
 ```powershell
-PS C:\> ec2rdp ssm -i i-01234567890abcdef --port 3390 --user MyAdmin --password 'P@ssword123456'
+PS C:\> ec2rdp ssm -i i-01234567890abcdef --port 3390 --user MyAdmin --password $(Read-Host 'Enter password' -MaskInput)
 
 # It is recommended to use some kind of vault tool for better security
 PS C:\> ec2rdp ssm -i i-01234567890abcdef --port 3390 --user MyAdmin --password $(Get-Secret -Name MyPassword -AsPlainText)
