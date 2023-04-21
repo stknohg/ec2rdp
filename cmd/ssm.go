@@ -95,7 +95,7 @@ func invokeSSMCommand(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
-	fmt.Printf("Start listening %v:%v\n", localHostName, localPort)
+	fmt.Printf("Starting session with SessionId: %v\n", result.SessionId)
 	for i := 1; ; i++ {
 		if isPortOpen(localHostName, localPort) {
 			break
@@ -105,6 +105,7 @@ func invokeSSMCommand(cmd *cobra.Command, args []string) error {
 			return fmt.Errorf("%v port %v is not open\n", localHostName, localPort)
 		}
 	}
+	fmt.Printf("Start listening %v:%v\n", localHostName, localPort)
 
 	// get administrator password
 	var password string
