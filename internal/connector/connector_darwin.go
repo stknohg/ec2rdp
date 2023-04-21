@@ -15,12 +15,13 @@ func (f *DefaultConnector) PreConnect() error {
 func (f *DefaultConnector) Connect() error {
 	// start Parallels Client
 	fmt.Printf("Connect to %v:%v\n", f.HostName, f.Port)
-	rasUrl = fmt.Sprintf("tuxclient:///?Command=LaunchApp&ConnType=2&Server=%v&Backup=&Port=%v&UserName=%v&Password=%v", f.HostName, f.Port, f.UserName, f.PlainPassword)
+	var rasUrl = fmt.Sprintf("tuxclient:///?Command=LaunchApp&ConnType=2&Server=%v&Backup=&Port=%v&LoginEx=%v&Password=%v", f.HostName, f.Port, f.UserName, f.PlainPassword)
 	cmd := exec.Command("open", rasUrl)
+	cmd.Start()
 	if f.WaitFor {
+		// To prevent password appearing from arguments, wait for the .app process.
+		cmd := exec.Command("open", "--wait-app", "/Applications/Parallels Client.app")
 		cmd.Run()
-	} else {
-		cmd.Start()
 	}
 	return nil
 }
