@@ -90,6 +90,9 @@ func invokePublicCommand(cmd *cobra.Command, args []string) error {
 		if err != nil {
 			return err
 		}
+		if password == "" {
+			return fmt.Errorf("EC2 PasswordData is empty. Use --password flag instead")
+		}
 		fmt.Println("Administrator password acquisition completed")
 	} else {
 		password = publicUserPassword

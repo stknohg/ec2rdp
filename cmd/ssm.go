@@ -83,6 +83,21 @@ func invokeSSMCommand(cmd *cobra.Command, args []string) error {
 		return err
 	}
 
+	// get administrator password
+	var password string
+	if ssmUserPassword == "" {
+		password, err = ec2.GetAdministratorPassword(cfg, ssmInstanceId, ssmPemFile)
+		if err != nil {
+			return err
+		}
+		if password == "" {
+			return fmt.Errorf("EC2 PasswordData is empty. Use --password flag instead")
+		}
+		fmt.Println("Administrator password acquisition completed")
+	} else {
+		password = ssmUserPassword
+	}
+
 	// get hostname and local port
 	var localHostName = "localhost"
 	localPort, err := getLocalRDPPort(localHostName, 33389)
@@ -106,18 +121,6 @@ func invokeSSMCommand(cmd *cobra.Command, args []string) error {
 		}
 	}
 	fmt.Printf("Start listening %v:%v\n", localHostName, localPort)
-
-	// get administrator password
-	var password string
-	if ssmUserPassword == "" {
-		password, err = ec2.GetAdministratorPassword(cfg, ssmInstanceId, ssmPemFile)
-		if err != nil {
-			return err
-		}
-		fmt.Println("Administrator password acquisition completed")
-	} else {
-		password = ssmUserPassword
-	}
 
 	// connect
 	return connectSSMInstance(localHostName, localPort, ssmUserName, password, result)
