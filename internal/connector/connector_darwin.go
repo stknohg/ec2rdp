@@ -20,7 +20,7 @@ func (f *DefaultConnector) Connect() error {
 	cmd.Start()
 	if f.WaitFor {
 		// To prevent password appearing from arguments, wait for the .app process.
-		cmd := exec.Command("open", "--wait-app", "/Applications/Parallels Client.app")
+		cmd := exec.Command("open", "--wait-apps", "/Applications/Parallels Client.app")
 		cmd.Run()
 	}
 	return nil
