@@ -13,7 +13,7 @@ builds:
       - amd64
       - arm64
     ldflags:
-      - -X "github.com/stknohg/ec2rdp/cmd.version=v{{.Version}}"
+      - -X "github.com/stknohg/ec2rdp/cmd.version={{.Version}}"
 
 archives:
   - format: tar.gz
@@ -34,7 +34,7 @@ checksum:
 snapshot:
   name_template: "{{ incpatch .Version }}-next"
 changelog:
-  sort: desc
+  sort: 
   filters:
     exclude:
       - '^docs:'
