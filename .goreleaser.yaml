@@ -40,3 +40,13 @@ changelog:
       - '^docs:'
       - '^test:'
       - '^fix.{0,1}$'
+brews:
+ - tap:
+    owner: stknohg
+    name: homebrew-tap
+    branch: main
+    token: "{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"
+   description: "Remote Desktop Utility for Amazon EC2."
+   homepage: "https://github.com/stknohg/ec2rdp"
+   license: "MIT"
+   folder: Formula
