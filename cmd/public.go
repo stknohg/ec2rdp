@@ -15,7 +15,7 @@ var pubilcInstanceId string
 var publicPemFile string
 var publicPort int
 var publicUserName string
-var publicUserPassword string
+var publicUserPassword bool
 var publicNoWait bool
 var publicProfileName string
 var publicRegionName string
@@ -26,7 +26,7 @@ var publicCmd = &cobra.Command{
 	Short: "Connect to public EC2 instance",
 	Long:  `Connect to public EC2 instance`,
 	Args: func(cmd *cobra.Command, args []string) error {
-		if publicPemFile == "" && publicUserPassword == "" {
+		if publicPemFile == "" && !publicUserPassword {
 			return errors.New("--pemfile or --password flag is requied")
 		}
 		if publicPemFile != "" {
@@ -51,7 +51,7 @@ func init() {
 	publicCmd.Flags().StringVarP(&publicPemFile, "pemfile", "p", "", ".pem file path")
 	publicCmd.Flags().IntVar(&publicPort, "port", 3389, "RDP port no")
 	publicCmd.Flags().StringVar(&publicUserName, "user", "Administrator", "RDP username")
-	publicCmd.Flags().StringVarP(&publicUserPassword, "password", "P", "", "RDP passowrd")
+	publicCmd.Flags().BoolVarP(&publicUserPassword, "password", "P", false, "RDP passowrd")
 	publicCmd.Flags().BoolVar(&publicNoWait, "nowait", false, "")
 	publicCmd.Flags().StringVar(&publicProfileName, "profile", "", "AWS profile name")
 	publicCmd.Flags().StringVar(&publicRegionName, "region", "", "AWS region name")
@@ -85,7 +85,7 @@ func invokePublicCommand(cmd *cobra.Command, args []string) error {
 
 	// get administrator password
 	var password string
-	if publicUserPassword == "" {
+	if !publicUserPassword {
 		password, err = ec2.GetAdministratorPassword(cfg, pubilcInstanceId, publicPemFile)
 		if err != nil {
 			return err
@@ -95,7 +95,7 @@ func invokePublicCommand(cmd *cobra.Command, args []string) error {
 		}
 		fmt.Println("Administrator password acquisition completed")
 	} else {
-		password = publicUserPassword
+		password = readPrompt("Enter password:")
 	}
 
 	// connect

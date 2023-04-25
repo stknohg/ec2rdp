@@ -20,7 +20,7 @@ var ssmInstanceId string
 var ssmPemFile string
 var ssmPort int
 var ssmUserName string
-var ssmUserPassword string
+var ssmUserPassword bool
 var ssmProfileName string
 var ssmRegionName string
 
@@ -33,7 +33,7 @@ var ssmCmd = &cobra.Command{
 		if !isSessionManagerPluginInstalled() {
 			return errors.New("session-manager-plugin is not installed")
 		}
-		if ssmPemFile == "" && ssmUserPassword == "" {
+		if ssmPemFile == "" && !ssmUserPassword {
 			return errors.New("--pemfile or --password flag is requied")
 		}
 		if ssmPemFile != "" {
@@ -58,7 +58,7 @@ func init() {
 	ssmCmd.Flags().StringVarP(&ssmPemFile, "pemfile", "p", "", ".pem file path")
 	ssmCmd.Flags().IntVar(&ssmPort, "port", 3389, "RDP port no")
 	ssmCmd.Flags().StringVar(&ssmUserName, "user", "Administrator", "RDP username")
-	ssmCmd.Flags().StringVarP(&ssmUserPassword, "password", "P", "", "RDP passowrd")
+	ssmCmd.Flags().BoolVarP(&ssmUserPassword, "password", "P", false, "RDP passowrd")
 	ssmCmd.Flags().StringVar(&ssmProfileName, "profile", "", "AWS profile name")
 	ssmCmd.Flags().StringVar(&ssmRegionName, "region", "", "AWS region name")
 	//
@@ -85,7 +85,7 @@ func invokeSSMCommand(cmd *cobra.Command, args []string) error {
 
 	// get administrator password
 	var password string
-	if ssmUserPassword == "" {
+	if !ssmUserPassword {
 		password, err = ec2.GetAdministratorPassword(cfg, ssmInstanceId, ssmPemFile)
 		if err != nil {
 			return err
@@ -95,7 +95,7 @@ func invokeSSMCommand(cmd *cobra.Command, args []string) error {
 		}
 		fmt.Println("Administrator password acquisition completed")
 	} else {
-		password = ssmUserPassword
+		password = readPrompt("Enter password:")
 	}
 
 	// get hostname and local port
