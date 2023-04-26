@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"net"
-	"os"
 	"os/exec"
 	"strconv"
 	"time"
@@ -16,14 +15,6 @@ import (
 	"github.com/stknohg/ec2rdp/internal/connector"
 )
 
-var ssmInstanceId string
-var ssmPemFile string
-var ssmPort int
-var ssmUserName string
-var ssmUserPassword bool
-var ssmProfileName string
-var ssmRegionName string
-
 // ssmCmd represents the ssm command
 var ssmCmd = &cobra.Command{
 	Use:   "ssm",
@@ -33,17 +24,18 @@ var ssmCmd = &cobra.Command{
 		if !isSessionManagerPluginInstalled() {
 			return errors.New("session-manager-plugin is not installed")
 		}
-		if ssmPemFile == "" && !ssmUserPassword {
+		if cpPemFile == "" && !cpUserPassword {
 			return errors.New("--pemfile or --password flag is requied")
 		}
-		if ssmPemFile != "" {
-			_, err := os.Stat(ssmPemFile)
+		if cpPemFile != "" {
+			err := validatePemFile(cpPemFile)
 			if err != nil {
-				return errors.New(".pem file does not exist")
+				return err
 			}
 		}
-		if ssmPort < 0 || ssmPort > 65535 {
-			return errors.New("set port number between 1 and 65535")
+		err := validatePort(cpPort)
+		if err != nil {
+			return err
 		}
 		return nil
 	},
@@ -54,13 +46,13 @@ var ssmCmd = &cobra.Command{
 
 func init() {
 	rootCmd.AddCommand(ssmCmd)
-	ssmCmd.Flags().StringVarP(&ssmInstanceId, "instance", "i", "", "EC2 Instance ID")
-	ssmCmd.Flags().StringVarP(&ssmPemFile, "pemfile", "p", "", ".pem file path")
-	ssmCmd.Flags().IntVar(&ssmPort, "port", 3389, "RDP port no")
-	ssmCmd.Flags().StringVar(&ssmUserName, "user", "Administrator", "RDP username")
-	ssmCmd.Flags().BoolVarP(&ssmUserPassword, "password", "P", false, "RDP passowrd")
-	ssmCmd.Flags().StringVar(&ssmProfileName, "profile", "", "AWS profile name")
-	ssmCmd.Flags().StringVar(&ssmRegionName, "region", "", "AWS region name")
+	ssmCmd.Flags().StringVarP(&cpInstanceId, "instance", "i", "", "EC2 Instance ID")
+	ssmCmd.Flags().StringVarP(&cpPemFile, "pemfile", "p", "", ".pem file path")
+	ssmCmd.Flags().IntVar(&cpPort, "port", 3389, "RDP port no")
+	ssmCmd.Flags().StringVar(&cpUserName, "user", "Administrator", "RDP username")
+	ssmCmd.Flags().BoolVarP(&cpUserPassword, "password", "P", false, "RDP passowrd")
+	ssmCmd.Flags().StringVar(&cpProfileName, "profile", "", "AWS profile name")
+	ssmCmd.Flags().StringVar(&cpRegionName, "region", "", "AWS region name")
 	//
 	ssmCmd.MarkFlagRequired("instance")
 	ssmCmd.MarkFlagFilename("pemfile", "pem")
@@ -69,24 +61,24 @@ func init() {
 
 func invokeSSMCommand(cmd *cobra.Command, args []string) error {
 	// get aws config
-	cfg := aws.GetConfig(ssmProfileName, ssmRegionName)
+	cfg := aws.GetConfig(cpProfileName, cpRegionName)
 
 	// check instance exists
-	_, err := ec2.IsInstanceExist(cfg, ssmInstanceId)
+	_, err := ec2.IsInstanceExist(cfg, cpInstanceId)
 	if err != nil {
 		return err
 	}
 
 	// check instance status
-	_, err = ssm.IsInstanceOnline(cfg, ssmInstanceId)
+	_, err = ssm.IsInstanceOnline(cfg, cpInstanceId)
 	if err != nil {
 		return err
 	}
 
 	// get administrator password
 	var password string
-	if !ssmUserPassword {
-		password, err = ec2.GetAdministratorPassword(cfg, ssmInstanceId, ssmPemFile)
+	if !cpUserPassword {
+		password, err = ec2.GetAdministratorPassword(cfg, cpInstanceId, cpPemFile)
 		if err != nil {
 			return err
 		}
@@ -106,7 +98,7 @@ func invokeSSMCommand(cmd *cobra.Command, args []string) error {
 	}
 
 	// start port forwarding with SSM Session Manager Plugin
-	result, err := ssm.StartSSMSessionPortForward(cfg, ssmInstanceId, ssmPort, localPort, ssmProfileName)
+	result, err := ssm.StartSSMSessionPortForward(cfg, cpInstanceId, cpPort, localPort, cpProfileName)
 	if err != nil {
 		return err
 	}
@@ -123,7 +115,7 @@ func invokeSSMCommand(cmd *cobra.Command, args []string) error {
 	fmt.Printf("Start listening %v:%v\n", localHostName, localPort)
 
 	// connect
-	return connectSSMInstance(localHostName, localPort, ssmUserName, password, result)
+	return connectSSMInstance(localHostName, localPort, cpUserName, password, result)
 }
 
 func isSessionManagerPluginInstalled() bool {

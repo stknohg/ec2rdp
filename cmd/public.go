@@ -3,7 +3,6 @@ package cmd
 import (
 	"errors"
 	"fmt"
-	"os"
 
 	"github.com/spf13/cobra"
 	"github.com/stknohg/ec2rdp/internal/aws"
@@ -11,14 +10,7 @@ import (
 	"github.com/stknohg/ec2rdp/internal/connector"
 )
 
-var pubilcInstanceId string
-var publicPemFile string
-var publicPort int
-var publicUserName string
-var publicUserPassword bool
 var publicNoWait bool
-var publicProfileName string
-var publicRegionName string
 
 // publicCmd represents the public command
 var publicCmd = &cobra.Command{
@@ -26,17 +18,18 @@ var publicCmd = &cobra.Command{
 	Short: "Connect to public EC2 instance",
 	Long:  `Connect to public EC2 instance`,
 	Args: func(cmd *cobra.Command, args []string) error {
-		if publicPemFile == "" && !publicUserPassword {
+		if cpPemFile == "" && !cpUserPassword {
 			return errors.New("--pemfile or --password flag is requied")
 		}
-		if publicPemFile != "" {
-			_, err := os.Stat(publicPemFile)
+		if cpPemFile != "" {
+			err := validatePemFile(cpPemFile)
 			if err != nil {
-				return errors.New(".pem file does not exist")
+				return err
 			}
 		}
-		if publicPort < 0 || publicPort > 65535 {
-			return errors.New("set port number between 1 and 65535")
+		err := validatePort(cpPort)
+		if err != nil {
+			return err
 		}
 		return nil
 	},
@@ -47,14 +40,15 @@ var publicCmd = &cobra.Command{
 
 func init() {
 	rootCmd.AddCommand(publicCmd)
-	publicCmd.Flags().StringVarP(&pubilcInstanceId, "instance", "i", "", "EC2 instance ID")
-	publicCmd.Flags().StringVarP(&publicPemFile, "pemfile", "p", "", ".pem file path")
-	publicCmd.Flags().IntVar(&publicPort, "port", 3389, "RDP port no")
-	publicCmd.Flags().StringVar(&publicUserName, "user", "Administrator", "RDP username")
-	publicCmd.Flags().BoolVarP(&publicUserPassword, "password", "P", false, "RDP passowrd")
+	publicCmd.Flags().StringVarP(&cpInstanceId, "instance", "i", "", "EC2 instance ID")
+	publicCmd.Flags().StringVarP(&cpPemFile, "pemfile", "p", "", ".pem file path")
+	publicCmd.Flags().IntVar(&cpPort, "port", 3389, "RDP port no")
+	publicCmd.Flags().StringVar(&cpUserName, "user", "Administrator", "RDP username")
+	publicCmd.Flags().BoolVarP(&cpUserPassword, "password", "P", false, "RDP passowrd")
+	publicCmd.Flags().StringVar(&cpProfileName, "profile", "", "AWS profile name")
+	publicCmd.Flags().StringVar(&cpRegionName, "region", "", "AWS region name")
+	// original parameters
 	publicCmd.Flags().BoolVar(&publicNoWait, "nowait", false, "")
-	publicCmd.Flags().StringVar(&publicProfileName, "profile", "", "AWS profile name")
-	publicCmd.Flags().StringVar(&publicRegionName, "region", "", "AWS region name")
 	//
 	publicCmd.MarkFlagRequired("instance")
 	publicCmd.MarkFlagFilename("pemfile", "pem")
@@ -63,30 +57,30 @@ func init() {
 
 func invokePublicCommand(cmd *cobra.Command, args []string) error {
 	// get aws config
-	cfg := aws.GetConfig(publicProfileName, publicRegionName)
+	cfg := aws.GetConfig(cpProfileName, cpRegionName)
 
 	// check instance exists
-	_, err := ec2.IsInstanceExist(cfg, pubilcInstanceId)
+	_, err := ec2.IsInstanceExist(cfg, cpInstanceId)
 	if err != nil {
 		return err
 	}
 
 	// get public hostname
-	hostName, err := ec2.GetPublicHostName(cfg, pubilcInstanceId)
+	hostName, err := ec2.GetPublicHostName(cfg, cpInstanceId)
 	if err != nil {
 		return err
 	}
 
 	// test port is open
-	if !isPortOpen(hostName, publicPort) {
-		return fmt.Errorf("failed to test TCP connection. (Port=%v)", publicPort)
+	if !isPortOpen(hostName, cpPort) {
+		return fmt.Errorf("failed to test TCP connection. (Port=%v)", cpPort)
 	}
-	fmt.Printf("Remote host %v port %v is open\n", hostName, publicPort)
+	fmt.Printf("Remote host %v port %v is open\n", hostName, cpPort)
 
 	// get administrator password
 	var password string
-	if !publicUserPassword {
-		password, err = ec2.GetAdministratorPassword(cfg, pubilcInstanceId, publicPemFile)
+	if !cpUserPassword {
+		password, err = ec2.GetAdministratorPassword(cfg, cpInstanceId, cpPemFile)
 		if err != nil {
 			return err
 		}
@@ -99,7 +93,7 @@ func invokePublicCommand(cmd *cobra.Command, args []string) error {
 	}
 
 	// connect
-	return connectPublicInstance(hostName, publicPort, publicUserName, password, !publicNoWait)
+	return connectPublicInstance(hostName, cpPort, cpUserName, password, !publicNoWait)
 }
 
 func connectPublicInstance(hostName string, port int, userName string, plainPassword string, waitFor bool) error {
