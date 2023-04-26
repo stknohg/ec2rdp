@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"os"
 	"os/exec"
 	"strconv"
 
@@ -72,6 +73,7 @@ func StartSSMSessionWithPlugin(cfg aws.Config, target string, documentName strin
 
 	// start session manager plugin
 	var ssmRegion = cfg.Region
+	var ssmProfile = getSSMProfileName(profileName)
 	// arg1
 	sessionJson, _ := json.Marshal(result)
 	arg1 := string(sessionJson)
@@ -80,7 +82,7 @@ func StartSSMSessionWithPlugin(cfg aws.Config, target string, documentName strin
 	// arg3
 	arg3 := "StartSession"
 	// arg4
-	arg4 := profileName
+	arg4 := ssmProfile
 	// arg5
 	pluginParameter := &sessionManagerPluginParameter{Target: target, Parameters: input.Parameters}
 	parameterJson, _ := json.Marshal(pluginParameter)
@@ -91,6 +93,13 @@ func StartSSMSessionWithPlugin(cfg aws.Config, target string, documentName strin
 	cmd := exec.Command("session-manager-plugin", arg1, arg2, arg3, arg4, arg5, arg6)
 	err = cmd.Start()
 	return &StartSSMSessionPluginResult{Config: cfg, SessionId: *result.SessionId, ProcessId: cmd.Process.Pid}, err
+}
+
+func getSSMProfileName(input string) string {
+	if input != "" {
+		return input
+	}
+	return os.Getenv("AWS_PROFILE")
 }
 
 func TerminateSSMSession(cfg aws.Config, sessionId string) error {
