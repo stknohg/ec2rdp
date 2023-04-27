@@ -3,6 +3,7 @@ package aws
 import (
 	"context"
 	"fmt"
+	"os"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
@@ -16,6 +17,11 @@ func GetConfig(profileName string, regionName string) aws.Config {
 
 	if regionName != "" {
 		optFunctions = append(optFunctions, config.WithRegion(regionName))
+	} else {
+		// try to get region name from IMDS
+		if _, exists := os.LookupEnv("AWS_EXECUTION_ENV"); exists {
+			optFunctions = append(optFunctions, config.WithEC2IMDSRegion())
+		}
 	}
 	if profileName != "" {
 		optFunctions = append(optFunctions, config.WithSharedConfigProfile(profileName))
