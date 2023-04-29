@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"net"
+	"os"
 	"os/exec"
 	"strconv"
 	"time"
@@ -62,15 +63,17 @@ func init() {
 func invokeSSMCommand(cmd *cobra.Command, args []string) error {
 	// get aws config
 	cfg := aws.GetConfig(cpProfileName, cpRegionName)
+	ec2api := ec2.NewAPI(cfg)
+	ssmapi := ssm.NewAPI(cfg)
 
 	// check instance exists
-	_, err := ec2.IsInstanceExist(cfg, cpInstanceId)
+	_, err := ec2.IsInstanceExist(ec2api, cpInstanceId)
 	if err != nil {
 		return err
 	}
 
 	// check instance status
-	_, err = ssm.IsInstanceOnline(cfg, cpInstanceId)
+	_, err = ssm.IsInstanceOnline(ssmapi, cpInstanceId)
 	if err != nil {
 		return err
 	}
@@ -78,7 +81,7 @@ func invokeSSMCommand(cmd *cobra.Command, args []string) error {
 	// get administrator password
 	var password string
 	if !cpUserPassword {
-		password, err = ec2.GetAdministratorPassword(cfg, cpInstanceId, cpPemFile)
+		password, err = ec2.GetAdministratorPassword(ec2api, cpInstanceId, cpPemFile)
 		if err != nil {
 			return err
 		}
@@ -98,7 +101,9 @@ func invokeSSMCommand(cmd *cobra.Command, args []string) error {
 	}
 
 	// start port forwarding with SSM Session Manager Plugin
-	result, err := ssm.StartSSMSessionPortForward(cfg, cpInstanceId, cpPort, localPort, cpProfileName)
+	var ssmRegion = cfg.Region
+	var ssmProfile = getSSMProfileName(cpProfileName)
+	result, err := ssm.StartSSMSessionPortForward(ssmapi, cpInstanceId, cpPort, localPort, "ec2rdp ssm", ssmRegion, ssmProfile)
 	if err != nil {
 		return err
 	}
@@ -116,6 +121,13 @@ func invokeSSMCommand(cmd *cobra.Command, args []string) error {
 
 	// connect
 	return connectSSMInstance(localHostName, localPort, cpUserName, password, result)
+}
+
+func getSSMProfileName(input string) string {
+	if input != "" {
+		return input
+	}
+	return os.Getenv("AWS_PROFILE")
 }
 
 func isSessionManagerPluginInstalled() bool {
@@ -153,7 +165,7 @@ func connectSSMInstance(hostName string, port int, userName string, plainPasswor
 	defer func() {
 		con.PostConnect()
 		fmt.Printf("Terminate SSM session%v\n", pluginResult.SessionId)
-		ssm.TerminateSSMSession(pluginResult.Config, pluginResult.SessionId)
+		ssm.TerminateSSMSession(pluginResult.API, pluginResult.SessionId)
 	}()
 	return nil
 }

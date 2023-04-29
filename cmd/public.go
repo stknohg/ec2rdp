@@ -58,15 +58,16 @@ func init() {
 func invokePublicCommand(cmd *cobra.Command, args []string) error {
 	// get aws config
 	cfg := aws.GetConfig(cpProfileName, cpRegionName)
+	ec2api := ec2.NewAPI(cfg)
 
 	// check instance exists
-	_, err := ec2.IsInstanceExist(cfg, cpInstanceId)
+	_, err := ec2.IsInstanceExist(ec2api, cpInstanceId)
 	if err != nil {
 		return err
 	}
 
 	// get public hostname
-	hostName, err := ec2.GetPublicHostName(cfg, cpInstanceId)
+	hostName, err := ec2.GetPublicHostName(ec2api, cpInstanceId)
 	if err != nil {
 		return err
 	}
@@ -80,7 +81,7 @@ func invokePublicCommand(cmd *cobra.Command, args []string) error {
 	// get administrator password
 	var password string
 	if !cpUserPassword {
-		password, err = ec2.GetAdministratorPassword(cfg, cpInstanceId, cpPemFile)
+		password, err = ec2.GetAdministratorPassword(ec2api, cpInstanceId, cpPemFile)
 		if err != nil {
 			return err
 		}

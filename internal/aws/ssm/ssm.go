@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"os"
 	"os/exec"
 	"strconv"
 
@@ -13,8 +12,16 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/ssm/types"
 )
 
+type SSMAPI interface {
+	DescribeInstanceInformation(ctx context.Context, params *ssm.DescribeInstanceInformationInput, optFns ...func(*ssm.Options)) (*ssm.DescribeInstanceInformationOutput, error)
+
+	StartSession(ctx context.Context, params *ssm.StartSessionInput, optFns ...func(*ssm.Options)) (*ssm.StartSessionOutput, error)
+
+	TerminateSession(ctx context.Context, params *ssm.TerminateSessionInput, optFns ...func(*ssm.Options)) (*ssm.TerminateSessionOutput, error)
+}
+
 type StartSSMSessionPluginResult struct {
-	Config    aws.Config
+	API       SSMAPI
 	SessionId string
 	ProcessId int
 }
@@ -24,15 +31,17 @@ type sessionManagerPluginParameter struct {
 	Parameters map[string][]string
 }
 
-func IsInstanceOnline(cfg aws.Config, instanceId string) (bool, error) {
-	client := ssm.NewFromConfig(cfg)
+func NewAPI(cfg aws.Config) SSMAPI {
+	return ssm.NewFromConfig(cfg)
+}
 
+func IsInstanceOnline(api SSMAPI, instanceId string) (bool, error) {
 	input := &ssm.DescribeInstanceInformationInput{
 		InstanceInformationFilterList: []types.InstanceInformationFilter{
 			{Key: "InstanceIds", ValueSet: []string{instanceId}},
 		},
 	}
-	result, err := client.DescribeInstanceInformation(context.TODO(), input)
+	result, err := api.DescribeInstanceInformation(context.TODO(), input)
 	if err != nil {
 		return false, err
 	}
@@ -46,18 +55,24 @@ func IsInstanceOnline(cfg aws.Config, instanceId string) (bool, error) {
 	return false, fmt.Errorf("instance %v is not online. (SSM PingStatus : %v)", instanceId, status)
 }
 
-func StartSSMSessionPortForward(cfg aws.Config, instanceId string, port int, localPort int, profileName string) (*StartSSMSessionPluginResult, error) {
+func StartSSMSessionPortForward(api SSMAPI, instanceId string, port int, localPort int, reason string, region string, profile string) (*StartSSMSessionPluginResult, error) {
 	return StartSSMSessionWithPlugin(
-		cfg,
+		api,
 		instanceId,
 		"AWS-StartPortForwardingSession",
 		map[string][]string{"portNumber": {strconv.Itoa(port)}, "localPortNumber": {strconv.Itoa(localPort)}},
-		"ec2rdp ssm",
-		profileName)
+		reason,
+		region,
+		profile)
 }
 
-func StartSSMSessionWithPlugin(cfg aws.Config, target string, documentName string, parameters map[string][]string, reason string, profileName string) (*StartSSMSessionPluginResult, error) {
-	client := ssm.NewFromConfig(cfg)
+func StartSSMSessionWithPlugin(api SSMAPI, target string, documentName string, parameters map[string][]string, reason string, region string, profile string) (*StartSSMSessionPluginResult, error) {
+	if target == "" {
+		return &StartSSMSessionPluginResult{}, fmt.Errorf("no target specified")
+	}
+	if region == "" {
+		return &StartSSMSessionPluginResult{}, fmt.Errorf("no region name specified")
+	}
 
 	// start session
 	input := &ssm.StartSessionInput{
@@ -66,50 +81,39 @@ func StartSSMSessionWithPlugin(cfg aws.Config, target string, documentName strin
 		Parameters:   parameters,
 		Reason:       &reason,
 	}
-	result, err := client.StartSession(context.TODO(), input)
+	result, err := api.StartSession(context.TODO(), input)
 	if err != nil {
 		return &StartSSMSessionPluginResult{}, err
 	}
 
 	// start session manager plugin
-	var ssmRegion = cfg.Region
-	var ssmProfile = getSSMProfileName(profileName)
 	// arg1
 	sessionJson, _ := json.Marshal(result)
 	arg1 := string(sessionJson)
 	// arg1
-	arg2 := ssmRegion
+	arg2 := region
 	// arg3
 	arg3 := "StartSession"
 	// arg4
-	arg4 := ssmProfile
+	arg4 := profile
 	// arg5
 	pluginParameter := &sessionManagerPluginParameter{Target: target, Parameters: input.Parameters}
 	parameterJson, _ := json.Marshal(pluginParameter)
 	arg5 := string(parameterJson)
 	// arg6
-	arg6 := fmt.Sprintf("https://ssm.%v.amazonaws.com", ssmRegion)
+	arg6 := fmt.Sprintf("https://ssm.%v.amazonaws.com", region)
 	// start process
 	cmd := exec.Command("session-manager-plugin", arg1, arg2, arg3, arg4, arg5, arg6)
 	err = cmd.Start()
-	return &StartSSMSessionPluginResult{Config: cfg, SessionId: *result.SessionId, ProcessId: cmd.Process.Pid}, err
+	return &StartSSMSessionPluginResult{API: api, SessionId: *result.SessionId, ProcessId: cmd.Process.Pid}, err
 }
 
-func getSSMProfileName(input string) string {
-	if input != "" {
-		return input
-	}
-	return os.Getenv("AWS_PROFILE")
-}
-
-func TerminateSSMSession(cfg aws.Config, sessionId string) error {
-	client := ssm.NewFromConfig(cfg)
-
+func TerminateSSMSession(api SSMAPI, sessionId string) error {
 	// start session
 	input := &ssm.TerminateSessionInput{
 		SessionId: &sessionId,
 	}
-	_, err := client.TerminateSession(context.TODO(), input)
+	_, err := api.TerminateSession(context.TODO(), input)
 	if err != nil {
 		return err
 	}

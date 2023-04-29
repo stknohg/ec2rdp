@@ -15,11 +15,19 @@ import (
 	"github.com/aws/smithy-go"
 )
 
-func IsInstanceExist(cfg aws.Config, instanceId string) (bool, error) {
-	client := ec2.NewFromConfig(cfg)
+type EC2API interface {
+	DescribeInstances(ctx context.Context, params *ec2.DescribeInstancesInput, optFns ...func(*ec2.Options)) (*ec2.DescribeInstancesOutput, error)
 
+	GetPasswordData(ctx context.Context, params *ec2.GetPasswordDataInput, optFns ...func(*ec2.Options)) (*ec2.GetPasswordDataOutput, error)
+}
+
+func NewAPI(cfg aws.Config) EC2API {
+	return ec2.NewFromConfig(cfg)
+}
+
+func IsInstanceExist(api EC2API, instanceId string) (bool, error) {
 	input := &ec2.DescribeInstancesInput{InstanceIds: []string{instanceId}}
-	_, err := client.DescribeInstances(context.TODO(), input)
+	_, err := api.DescribeInstances(context.TODO(), input)
 	if err != nil {
 		var apiErr smithy.APIError
 		if errors.As(err, &apiErr) {
@@ -32,11 +40,9 @@ func IsInstanceExist(cfg aws.Config, instanceId string) (bool, error) {
 	return true, nil
 }
 
-func GetPublicHostName(cfg aws.Config, instanceId string) (string, error) {
-	client := ec2.NewFromConfig(cfg)
-
+func GetPublicHostName(api EC2API, instanceId string) (string, error) {
 	input := &ec2.DescribeInstancesInput{InstanceIds: []string{instanceId}}
-	result, err := client.DescribeInstances(context.TODO(), input)
+	result, err := api.DescribeInstances(context.TODO(), input)
 	if err != nil {
 		return "", err
 	}
@@ -55,11 +61,9 @@ func GetPublicHostName(cfg aws.Config, instanceId string) (string, error) {
 	return "", errors.New("failed to find public hostname")
 }
 
-func GetAdministratorPassword(cfg aws.Config, instanceId string, pemFilePath string) (string, error) {
-	client := ec2.NewFromConfig(cfg)
-
+func GetAdministratorPassword(api EC2API, instanceId string, pemFilePath string) (string, error) {
 	input := &ec2.GetPasswordDataInput{InstanceId: &instanceId}
-	result, err := client.GetPasswordData(context.TODO(), input)
+	result, err := api.GetPasswordData(context.TODO(), input)
 	if err != nil {
 		return "", err
 	}
