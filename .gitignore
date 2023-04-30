@@ -16,3 +16,6 @@
 
 # goreleaser 
 dist/
+
+# VS Code
+.vscode/
