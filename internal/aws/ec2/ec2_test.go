@@ -100,21 +100,36 @@ func Test_GetPublicHostName(t *testing.T) {
 func Test_GetAdministratorPassword(t *testing.T) {
 	// when password data not found
 	var instanceId = "i-1234567890"
-	var emptyEncodedPassword = ""
-	var emptyDecodePassword = ""
+	var encodedPassword = "" // PassworData is empty
+	var expedtedPassword = ""
 	var mock = &MockAPI{
 		GetPasswordDataOutput: &ec2.GetPasswordDataOutput{
-			PasswordData: &emptyEncodedPassword,
+			PasswordData: &encodedPassword,
 		},
 		Error: nil,
 	}
-	var result, err = GetAdministratorPassword(mock, instanceId, "test.pem")
+	var result, err = GetAdministratorPassword(mock, instanceId, "./testdata/test.pem")
 	if err != nil {
 		t.Error("Failed to get PasswordData")
 	}
-	if result != emptyDecodePassword {
+	if result != expedtedPassword {
 		t.Error("PasswordData is empty")
 	}
 
-	// TODO : Add tests
+	// when password data exists
+	encodedPassword = "ilVJituy4wak95QClqnC/FcUbQWTZHXaCNR5yMvxL24TDeWaoSlnPxS5eIX07tEAZHmgqINGc1cD5tKMEHgO47+lt1p7vvB5mXYDdrwVAuSA5K8tg7BIA7umYlgVIocNTzUJHEmr10Lx/Vlb3g1AEE9Rl1fnk7FYCl6kBkwpejcCtqLZclt2wt62GkGR5KekHAsw3Fiy4x9uMUkgfjwH7FjFld+FzZUJ1RNrCC7H6dvnk1WIbgnQetwecAFq56heimDD7BKncsAu5R0gOMEGB88KLzjEPJi5c6T73e/W3jvD7us4evRUFIM7tcaQ8RBmBa7eDYmXFIEcmfGRm38Trg=="
+	expedtedPassword = "4Hio.kdu40ajlj%p7ZfINkkR5uU6e-zY"
+	mock = &MockAPI{
+		GetPasswordDataOutput: &ec2.GetPasswordDataOutput{
+			PasswordData: &encodedPassword,
+		},
+		Error: nil,
+	}
+	result, err = GetAdministratorPassword(mock, instanceId, "./testdata/test.pem")
+	if err != nil {
+		t.Error("Failed to get PasswordData")
+	}
+	if result != expedtedPassword {
+		t.Error("Dedode password is wrong")
+	}
 }
