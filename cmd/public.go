@@ -53,6 +53,8 @@ func init() {
 	publicCmd.MarkFlagRequired("instance")
 	publicCmd.MarkFlagFilename("pemfile", "pem")
 	publicCmd.MarkFlagsMutuallyExclusive("pemfile", "password")
+	// custom completion
+	publicCmd.RegisterFlagCompletionFunc("region", invokeRegionCompletion)
 }
 
 func invokePublicCommand(cmd *cobra.Command, args []string) error {

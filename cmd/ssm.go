@@ -58,6 +58,8 @@ func init() {
 	ssmCmd.MarkFlagRequired("instance")
 	ssmCmd.MarkFlagFilename("pemfile", "pem")
 	ssmCmd.MarkFlagsMutuallyExclusive("pemfile", "password")
+	// custom completion
+	ssmCmd.RegisterFlagCompletionFunc("region", invokeRegionCompletion)
 }
 
 func invokeSSMCommand(cmd *cobra.Command, args []string) error {
