@@ -22,8 +22,8 @@ var ssmCmd = &cobra.Command{
 	Short: "Connect to EC2 Instance via SSM Session Manager",
 	Long:  `Connect to EC2 Instance via SSM Session Manager`,
 	Args: func(cmd *cobra.Command, args []string) error {
-		if !isSessionManagerPluginInstalled() {
-			return errors.New("session-manager-plugin is not installed")
+		if installed, err := isSessionManagerPluginInstalled(); !installed {
+			return err
 		}
 		if cpPemFile == "" && !cpUserPassword {
 			return errors.New("--pemfile or --password flag is requied")
@@ -144,9 +144,14 @@ func getSSMProfileName(input string) string {
 	return os.Getenv("AWS_PROFILE")
 }
 
-func isSessionManagerPluginInstalled() bool {
+func isSessionManagerPluginInstalled() (bool, error) {
 	_, err := exec.LookPath("session-manager-plugin")
-	return err == nil
+	if err != nil {
+		// ref : https://github.com/aws/aws-cli/blob/2.11.16/awscli/customizations/sessionmanager.py#L23-L28
+		return false, errors.New(`SessionManagerPlugin is not found.
+Please refer to SessionManager Documentation here: https://docs.aws.amazon.com/systems-manager/latest/userguide/session-manager-troubleshooting.html#plugin-not-found`)
+	}
+	return true, nil
 }
 
 func getLocalRDPPort(localHost string, startPort int) (int, error) {
