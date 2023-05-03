@@ -12,6 +12,14 @@ import (
 	"golang.org/x/text/transform"
 )
 
+func (f *DefaultConnector) IsInstalled() (bool, error) {
+	_, err := exec.LookPath("mstsc")
+	if err != nil {
+		return false, fmt.Errorf("%v is not found", "mstsc.exe")
+	}
+	return true, nil
+}
+
 func (f *DefaultConnector) PreConnect() error {
 	fmt.Printf("Save credential TERMSRV/%v to Credential Manager\n", f.HostName)
 	//cmd := exec.Command("cmdkey", fmt.Sprintf("/generic:TERMSRV/%v", f.HostName), fmt.Sprintf("/user:%v", f.UserName), fmt.Sprintf("/pass:%v", f.PlainPassword))

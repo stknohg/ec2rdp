@@ -4,8 +4,17 @@ package connector
 
 import (
 	"fmt"
+	"os"
 	"os/exec"
 )
+
+func (f *DefaultConnector) IsInstalled() (bool, error) {
+	_, err := os.Stat("/Applications/Parallels Client.app")
+	if err != nil {
+		return false, fmt.Errorf("%v is not installed", "Parallels Client")
+	}
+	return true, nil
+}
 
 func (f *DefaultConnector) PreConnect() error {
 	// do nothing

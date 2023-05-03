@@ -58,12 +58,19 @@ func init() {
 }
 
 func invokePublicCommand(cmd *cobra.Command, args []string) error {
+	// check if connector application installed
+	connector := connector.DefaultConnector{}
+	_, err := connector.IsInstalled()
+	if err != nil {
+		return err
+	}
+
 	// get aws config
 	cfg := aws.GetConfig(cpProfileName, cpRegionName)
 	ec2api := ec2.NewAPI(cfg)
 
 	// check instance exists
-	_, err := ec2.IsInstanceExist(ec2api, cpInstanceId)
+	_, err = ec2.IsInstanceExist(ec2api, cpInstanceId)
 	if err != nil {
 		return err
 	}
@@ -96,17 +103,15 @@ func invokePublicCommand(cmd *cobra.Command, args []string) error {
 	}
 
 	// connect
-	return connectPublicInstance(hostName, cpPort, cpUserName, password, !publicNoWait)
+	connector.HostName = hostName
+	connector.Port = cpPort
+	connector.UserName = cpUserName
+	connector.PlainPassword = password
+	connector.WaitFor = !publicNoWait
+	return connectPublicInstance(&connector)
 }
 
-func connectPublicInstance(hostName string, port int, userName string, plainPassword string, waitFor bool) error {
-	con := connector.DefaultConnector{
-		HostName:      hostName,
-		Port:          port,
-		UserName:      userName,
-		PlainPassword: plainPassword,
-		WaitFor:       waitFor,
-	}
+func connectPublicInstance(con connector.Connector) error {
 	err := con.PreConnect()
 	if err != nil {
 		return err

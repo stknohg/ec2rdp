@@ -63,13 +63,20 @@ func init() {
 }
 
 func invokeSSMCommand(cmd *cobra.Command, args []string) error {
+	// check if connector application installed
+	connector := connector.DefaultConnector{}
+	_, err := connector.IsInstalled()
+	if err != nil {
+		return err
+	}
+
 	// get aws config
 	cfg := aws.GetConfig(cpProfileName, cpRegionName)
 	ec2api := ec2.NewAPI(cfg)
 	ssmapi := ssm.NewAPI(cfg)
 
 	// check instance exists
-	_, err := ec2.IsInstanceExist(ec2api, cpInstanceId)
+	_, err = ec2.IsInstanceExist(ec2api, cpInstanceId)
 	if err != nil {
 		return err
 	}
@@ -105,11 +112,11 @@ func invokeSSMCommand(cmd *cobra.Command, args []string) error {
 	// start port forwarding with SSM Session Manager Plugin
 	var ssmRegion = cfg.Region
 	var ssmProfile = getSSMProfileName(cpProfileName)
-	result, err := ssm.StartSSMSessionPortForward(ssmapi, cpInstanceId, cpPort, localPort, "ec2rdp ssm", ssmRegion, ssmProfile)
+	ssmResult, err := ssm.StartSSMSessionPortForward(ssmapi, cpInstanceId, cpPort, localPort, "ec2rdp ssm", ssmRegion, ssmProfile)
 	if err != nil {
 		return err
 	}
-	fmt.Printf("Starting session with SessionId: %v\n", result.SessionId)
+	fmt.Printf("Starting session with SessionId: %v\n", ssmResult.SessionId)
 	for i := 1; ; i++ {
 		if isPortOpen(localHostName, localPort) {
 			break
@@ -122,7 +129,12 @@ func invokeSSMCommand(cmd *cobra.Command, args []string) error {
 	fmt.Printf("Start listening %v:%v\n", localHostName, localPort)
 
 	// connect
-	return connectSSMInstance(localHostName, localPort, cpUserName, password, result)
+	connector.HostName = localHostName
+	connector.Port = localPort
+	connector.UserName = cpUserName
+	connector.PlainPassword = password
+	connector.WaitFor = true // always true
+	return connectSSMInstance(&connector, ssmResult)
 }
 
 func getSSMProfileName(input string) string {
@@ -148,14 +160,7 @@ func getLocalRDPPort(localHost string, startPort int) (int, error) {
 	return 65535, fmt.Errorf("failed to find local proxy port")
 }
 
-func connectSSMInstance(hostName string, port int, userName string, plainPassword string, pluginResult *ssm.StartSSMSessionPluginResult) error {
-	con := connector.DefaultConnector{
-		HostName:      hostName,
-		Port:          port,
-		UserName:      userName,
-		PlainPassword: plainPassword,
-		WaitFor:       true, // always true
-	}
+func connectSSMInstance(con connector.Connector, ret *ssm.StartSSMSessionPluginResult) error {
 	err := con.PreConnect()
 	if err != nil {
 		return err
@@ -166,8 +171,8 @@ func connectSSMInstance(hostName string, port int, userName string, plainPasswor
 	}
 	defer func() {
 		con.PostConnect()
-		fmt.Printf("Terminate SSM session%v\n", pluginResult.SessionId)
-		ssm.TerminateSSMSession(pluginResult.API, pluginResult.SessionId)
+		fmt.Printf("Terminate SSM session%v\n", ret.SessionId)
+		ssm.TerminateSSMSession(ret.API, ret.SessionId)
 	}()
 	return nil
 }

@@ -1,6 +1,7 @@
 package connector
 
 type Connector interface {
+	IsInstalled() (bool, error)
 	PreConnect() error
 	Connect() error
 	PostConnect() error
