@@ -37,7 +37,7 @@ func Test_IsInstanceOnline(t *testing.T) {
 		},
 		Error: nil,
 	}
-	var result, err = IsInstanceOnline(mock, instanceId)
+	var result, err = IsInstanceOnline(mock, context.TODO(), instanceId)
 	if err == nil {
 		t.Error("Failed to get instance status")
 	}
@@ -52,7 +52,7 @@ func Test_IsInstanceOnline(t *testing.T) {
 		},
 		Error: nil,
 	}
-	result, err = IsInstanceOnline(mock, instanceId)
+	result, err = IsInstanceOnline(mock, context.TODO(), instanceId)
 	if err == nil {
 		t.Error("Failed to get instance status")
 	}
@@ -67,7 +67,7 @@ func Test_IsInstanceOnline(t *testing.T) {
 		},
 		Error: nil,
 	}
-	result, err = IsInstanceOnline(mock, instanceId)
+	result, err = IsInstanceOnline(mock, context.TODO(), instanceId)
 	if err != nil {
 		t.Error("Failed to get instance status")
 	}

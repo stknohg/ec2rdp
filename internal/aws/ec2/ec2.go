@@ -25,9 +25,9 @@ func NewAPI(cfg aws.Config) EC2API {
 	return ec2.NewFromConfig(cfg)
 }
 
-func IsInstanceExist(api EC2API, instanceId string) (bool, error) {
+func IsInstanceExist(api EC2API, ctx context.Context, instanceId string) (bool, error) {
 	input := &ec2.DescribeInstancesInput{InstanceIds: []string{instanceId}}
-	_, err := api.DescribeInstances(context.TODO(), input)
+	_, err := api.DescribeInstances(ctx, input)
 	if err != nil {
 		var apiErr smithy.APIError
 		if errors.As(err, &apiErr) {
@@ -40,9 +40,9 @@ func IsInstanceExist(api EC2API, instanceId string) (bool, error) {
 	return true, nil
 }
 
-func GetPublicHostName(api EC2API, instanceId string) (string, error) {
+func GetPublicHostName(api EC2API, ctx context.Context, instanceId string) (string, error) {
 	input := &ec2.DescribeInstancesInput{InstanceIds: []string{instanceId}}
-	result, err := api.DescribeInstances(context.TODO(), input)
+	result, err := api.DescribeInstances(ctx, input)
 	if err != nil {
 		return "", err
 	}
@@ -61,9 +61,9 @@ func GetPublicHostName(api EC2API, instanceId string) (string, error) {
 	return "", errors.New("failed to find public hostname")
 }
 
-func GetAdministratorPassword(api EC2API, instanceId string, pemFilePath string) (string, error) {
+func GetAdministratorPassword(api EC2API, ctx context.Context, instanceId string, pemFilePath string) (string, error) {
 	input := &ec2.GetPasswordDataInput{InstanceId: &instanceId}
-	result, err := api.GetPasswordData(context.TODO(), input)
+	result, err := api.GetPasswordData(ctx, input)
 	if err != nil {
 		return "", err
 	}

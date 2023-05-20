@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"context"
 	"errors"
 	"fmt"
 
@@ -68,15 +69,16 @@ func invokePublicCommand(cmd *cobra.Command, args []string) error {
 	// get aws config
 	cfg := aws.GetConfig(cpProfileName, cpRegionName)
 	ec2api := ec2.NewAPI(cfg)
+	ctx := context.Background()
 
 	// check instance exists
-	_, err = ec2.IsInstanceExist(ec2api, cpInstanceId)
+	_, err = ec2.IsInstanceExist(ec2api, ctx, cpInstanceId)
 	if err != nil {
 		return err
 	}
 
 	// get public hostname
-	hostName, err := ec2.GetPublicHostName(ec2api, cpInstanceId)
+	hostName, err := ec2.GetPublicHostName(ec2api, ctx, cpInstanceId)
 	if err != nil {
 		return err
 	}
@@ -90,7 +92,7 @@ func invokePublicCommand(cmd *cobra.Command, args []string) error {
 	// get administrator password
 	var password string
 	if !cpUserPassword {
-		password, err = ec2.GetAdministratorPassword(ec2api, cpInstanceId, cpPemFile)
+		password, err = ec2.GetAdministratorPassword(ec2api, ctx, cpInstanceId, cpPemFile)
 		if err != nil {
 			return err
 		}

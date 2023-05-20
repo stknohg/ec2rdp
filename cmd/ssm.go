@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"net"
@@ -74,15 +75,16 @@ func invokeSSMCommand(cmd *cobra.Command, args []string) error {
 	cfg := aws.GetConfig(cpProfileName, cpRegionName)
 	ec2api := ec2.NewAPI(cfg)
 	ssmapi := ssm.NewAPI(cfg)
+	ctx := context.Background()
 
 	// check instance exists
-	_, err = ec2.IsInstanceExist(ec2api, cpInstanceId)
+	_, err = ec2.IsInstanceExist(ec2api, ctx, cpInstanceId)
 	if err != nil {
 		return err
 	}
 
 	// check instance status
-	_, err = ssm.IsInstanceOnline(ssmapi, cpInstanceId)
+	_, err = ssm.IsInstanceOnline(ssmapi, ctx, cpInstanceId)
 	if err != nil {
 		return err
 	}
@@ -90,7 +92,7 @@ func invokeSSMCommand(cmd *cobra.Command, args []string) error {
 	// get administrator password
 	var password string
 	if !cpUserPassword {
-		password, err = ec2.GetAdministratorPassword(ec2api, cpInstanceId, cpPemFile)
+		password, err = ec2.GetAdministratorPassword(ec2api, ctx, cpInstanceId, cpPemFile)
 		if err != nil {
 			return err
 		}
@@ -112,7 +114,7 @@ func invokeSSMCommand(cmd *cobra.Command, args []string) error {
 	// start port forwarding with SSM Session Manager Plugin
 	var ssmRegion = cfg.Region
 	var ssmProfile = getSSMProfileName(cpProfileName)
-	ssmResult, err := ssm.StartSSMSessionPortForward(ssmapi, cpInstanceId, cpPort, localPort, "ec2rdp ssm", ssmRegion, ssmProfile)
+	ssmResult, err := ssm.StartSSMSessionPortForward(ssmapi, ctx, cpInstanceId, cpPort, localPort, "ec2rdp ssm", ssmRegion, ssmProfile)
 	if err != nil {
 		return err
 	}
@@ -177,7 +179,7 @@ func connectSSMInstance(con connector.Connector, ret *ssm.StartSSMSessionPluginR
 	defer func() {
 		con.PostConnect()
 		fmt.Printf("Terminate SSM session%v\n", ret.SessionId)
-		ssm.TerminateSSMSession(ret.API, ret.SessionId)
+		ssm.TerminateSSMSession(ret.API, context.Background(), ret.SessionId)
 	}()
 	return nil
 }

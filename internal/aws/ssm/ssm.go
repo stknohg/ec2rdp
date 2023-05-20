@@ -35,13 +35,13 @@ func NewAPI(cfg aws.Config) SSMAPI {
 	return ssm.NewFromConfig(cfg)
 }
 
-func IsInstanceOnline(api SSMAPI, instanceId string) (bool, error) {
+func IsInstanceOnline(api SSMAPI, ctx context.Context, instanceId string) (bool, error) {
 	input := &ssm.DescribeInstanceInformationInput{
 		InstanceInformationFilterList: []types.InstanceInformationFilter{
 			{Key: "InstanceIds", ValueSet: []string{instanceId}},
 		},
 	}
-	result, err := api.DescribeInstanceInformation(context.TODO(), input)
+	result, err := api.DescribeInstanceInformation(ctx, input)
 	if err != nil {
 		return false, err
 	}
@@ -55,9 +55,10 @@ func IsInstanceOnline(api SSMAPI, instanceId string) (bool, error) {
 	return false, fmt.Errorf("instance %v is not online. (SSM PingStatus : %v)", instanceId, status)
 }
 
-func StartSSMSessionPortForward(api SSMAPI, instanceId string, port int, localPort int, reason string, region string, profile string) (*StartSSMSessionPluginResult, error) {
+func StartSSMSessionPortForward(api SSMAPI, ctx context.Context, instanceId string, port int, localPort int, reason string, region string, profile string) (*StartSSMSessionPluginResult, error) {
 	return StartSSMSessionWithPlugin(
 		api,
+		ctx,
 		instanceId,
 		"AWS-StartPortForwardingSession",
 		map[string][]string{"portNumber": {strconv.Itoa(port)}, "localPortNumber": {strconv.Itoa(localPort)}},
@@ -66,7 +67,7 @@ func StartSSMSessionPortForward(api SSMAPI, instanceId string, port int, localPo
 		profile)
 }
 
-func StartSSMSessionWithPlugin(api SSMAPI, target string, documentName string, parameters map[string][]string, reason string, region string, profile string) (*StartSSMSessionPluginResult, error) {
+func StartSSMSessionWithPlugin(api SSMAPI, ctx context.Context, target string, documentName string, parameters map[string][]string, reason string, region string, profile string) (*StartSSMSessionPluginResult, error) {
 	if target == "" {
 		return &StartSSMSessionPluginResult{}, fmt.Errorf("no target specified")
 	}
@@ -81,7 +82,7 @@ func StartSSMSessionWithPlugin(api SSMAPI, target string, documentName string, p
 		Parameters:   parameters,
 		Reason:       &reason,
 	}
-	result, err := api.StartSession(context.TODO(), input)
+	result, err := api.StartSession(ctx, input)
 	if err != nil {
 		return &StartSSMSessionPluginResult{}, err
 	}
@@ -108,12 +109,12 @@ func StartSSMSessionWithPlugin(api SSMAPI, target string, documentName string, p
 	return &StartSSMSessionPluginResult{API: api, SessionId: *result.SessionId, ProcessId: cmd.Process.Pid}, err
 }
 
-func TerminateSSMSession(api SSMAPI, sessionId string) error {
+func TerminateSSMSession(api SSMAPI, ctx context.Context, sessionId string) error {
 	// start session
 	input := &ssm.TerminateSessionInput{
 		SessionId: &sessionId,
 	}
-	_, err := api.TerminateSession(context.TODO(), input)
+	_, err := api.TerminateSession(ctx, input)
 	if err != nil {
 		return err
 	}

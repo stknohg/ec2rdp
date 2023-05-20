@@ -32,7 +32,7 @@ func Test_IsInstanceExist(t *testing.T) {
 		},
 		Error: nil,
 	}
-	if exists, _ := IsInstanceExist(mock, instanceId); !exists {
+	if exists, _ := IsInstanceExist(mock, context.Background(), instanceId); !exists {
 		t.Error("Instance exists")
 	}
 
@@ -41,7 +41,7 @@ func Test_IsInstanceExist(t *testing.T) {
 		DescribeInstancesOutput: &ec2.DescribeInstancesOutput{},
 		Error:                   &smithy.GenericAPIError{Code: "InvalidInstanceID.Malformed"},
 	}
-	if exists, _ := IsInstanceExist(mock, instanceId); exists {
+	if exists, _ := IsInstanceExist(mock, context.Background(), instanceId); exists {
 		t.Error("Instance exists")
 	}
 }
@@ -58,7 +58,7 @@ func Test_GetPublicHostName(t *testing.T) {
 		},
 		Error: nil,
 	}
-	var result, err = GetPublicHostName(mock, instanceId)
+	var result, err = GetPublicHostName(mock, context.Background(), instanceId)
 	if err != nil {
 		t.Error("Failed to get public DNS name")
 	}
@@ -73,7 +73,7 @@ func Test_GetPublicHostName(t *testing.T) {
 		},
 		Error: nil,
 	}
-	result, err = GetPublicHostName(mock, instanceId)
+	result, err = GetPublicHostName(mock, context.Background(), instanceId)
 	if err != nil {
 		t.Error("Failed to get public IP address")
 	}
@@ -88,7 +88,7 @@ func Test_GetPublicHostName(t *testing.T) {
 		},
 		Error: nil,
 	}
-	_, err = GetPublicHostName(mock, instanceId)
+	_, err = GetPublicHostName(mock, context.Background(), instanceId)
 	if err == nil {
 		t.Error("Failed to get public DNS name or IP address")
 	}
@@ -108,7 +108,7 @@ func Test_GetAdministratorPassword(t *testing.T) {
 		},
 		Error: nil,
 	}
-	var result, err = GetAdministratorPassword(mock, instanceId, "./testdata/test.pem")
+	var result, err = GetAdministratorPassword(mock, context.Background(), instanceId, "./testdata/test.pem")
 	if err != nil {
 		t.Error("Failed to get PasswordData")
 	}
@@ -125,7 +125,7 @@ func Test_GetAdministratorPassword(t *testing.T) {
 		},
 		Error: nil,
 	}
-	result, err = GetAdministratorPassword(mock, instanceId, "./testdata/test.pem")
+	result, err = GetAdministratorPassword(mock, context.Background(), instanceId, "./testdata/test.pem")
 	if err != nil {
 		t.Error("Failed to get PasswordData")
 	}
