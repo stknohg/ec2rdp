@@ -13,7 +13,7 @@ builds:
       - amd64
       - arm64
     ldflags:
-      - -X "github.com/stknohg/ec2rdp/cmd.version={{.Version}}"
+      - -X "github.com/stknohg/ec2rdp/cmd.cmdVersion={{.Version}}"
 
 archives:
   - format: tar.gz
