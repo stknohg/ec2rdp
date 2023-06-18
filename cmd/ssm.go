@@ -4,10 +4,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"net"
 	"os"
 	"os/exec"
-	"strconv"
 	"time"
 
 	"github.com/spf13/cobra"
@@ -20,8 +18,8 @@ import (
 // ssmCmd represents the ssm command
 var ssmCmd = &cobra.Command{
 	Use:   "ssm",
-	Short: "Connect to EC2 Instance via SSM Session Manager",
-	Long:  `Connect to EC2 Instance via SSM Session Manager`,
+	Short: "Connect to EC2 instance via SSM Session Manager",
+	Long:  `Connect to EC2 instance via SSM Session Manager`,
 	Args: func(cmd *cobra.Command, args []string) error {
 		if installed, err := isSessionManagerPluginInstalled(); !installed {
 			return err
@@ -154,17 +152,6 @@ func isSessionManagerPluginInstalled() (bool, error) {
 Please refer to SessionManager Documentation here: https://docs.aws.amazon.com/systems-manager/latest/userguide/session-manager-troubleshooting.html#plugin-not-found`)
 	}
 	return true, nil
-}
-
-func getLocalRDPPort(localHost string, startPort int) (int, error) {
-	for i := startPort; i <= 65535; i++ {
-		listener, err := net.Listen("tcp", net.JoinHostPort(localHost, strconv.Itoa(i)))
-		if err == nil {
-			defer listener.Close()
-			return i, nil
-		}
-	}
-	return 65535, fmt.Errorf("failed to find local proxy port")
 }
 
 func connectSSMInstance(con connector.Connector, ret *ssm.StartSSMSessionPluginResult) error {

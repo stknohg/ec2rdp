@@ -6,7 +6,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var version string = "0.0.0"
+var cmdVersion string = "0.0.0"
 
 // versionCmd represents the version command
 var versionCmd = &cobra.Command{
@@ -14,7 +14,7 @@ var versionCmd = &cobra.Command{
 	Short: "Show version",
 	Long:  `Show version`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println(version)
+		fmt.Println(cmdVersion)
 	},
 }
 
