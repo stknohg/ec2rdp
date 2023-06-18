@@ -4,19 +4,25 @@ import (
 	"context"
 	"testing"
 
+	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/service/ec2"
 	"github.com/aws/aws-sdk-go-v2/service/ec2/types"
 	"github.com/aws/smithy-go"
 )
 
 type MockAPI struct {
-	DescribeInstancesOutput *ec2.DescribeInstancesOutput
-	GetPasswordDataOutput   *ec2.GetPasswordDataOutput
-	Error                   error
+	DescribeInstancesOutput                *ec2.DescribeInstancesOutput
+	DescribeInstanceConnectEndpointsOutput *ec2.DescribeInstanceConnectEndpointsOutput
+	GetPasswordDataOutput                  *ec2.GetPasswordDataOutput
+	Error                                  error
 }
 
 func (m *MockAPI) DescribeInstances(ctx context.Context, params *ec2.DescribeInstancesInput, optFns ...func(*ec2.Options)) (*ec2.DescribeInstancesOutput, error) {
 	return m.DescribeInstancesOutput, m.Error
+}
+
+func (m *MockAPI) DescribeInstanceConnectEndpoints(ctx context.Context, params *ec2.DescribeInstanceConnectEndpointsInput, optFns ...func(*ec2.Options)) (*ec2.DescribeInstanceConnectEndpointsOutput, error) {
+	return m.DescribeInstanceConnectEndpointsOutput, m.Error
 }
 
 func (m *MockAPI) GetPasswordData(ctx context.Context, params *ec2.GetPasswordDataInput, optFns ...func(*ec2.Options)) (*ec2.GetPasswordDataOutput, error) {
@@ -94,6 +100,92 @@ func Test_GetPublicHostName(t *testing.T) {
 	}
 	if err.Error() != "failed to find public hostname" {
 		t.Error("Invalid error message")
+	}
+}
+
+func Test_GetInstanceMetadataForEICE(t *testing.T) {
+	var instanceId = "i-1234567890"
+	var state = types.InstanceState{Code: aws.Int32(16), Name: types.InstanceStateNameRunning}
+	var privateIp = "1.2.3.4"
+	var vpcId = "vpc-1234567890"
+
+	// when public DNS name exists
+	var mock = &MockAPI{
+		DescribeInstancesOutput: &ec2.DescribeInstancesOutput{
+			Reservations: []types.Reservation{{Instances: []types.Instance{{InstanceId: &instanceId, State: &state, PrivateIpAddress: &privateIp, VpcId: &vpcId}}}},
+		},
+		Error: nil,
+	}
+	var result, err = GetInstanceMetadataForEICE(mock, context.Background(), instanceId)
+	if err != nil {
+		t.Error("Failed to get public DNS name")
+	}
+	if result.State.Code != state.Code {
+		t.Error("Invalid instance state code")
+	}
+	if result.State.Name != state.Name {
+		t.Error("Invalid instance state name")
+	}
+	if result.PrivateIpAddress != privateIp {
+		t.Error("Invalid private ip address")
+	}
+	if result.VpcId != vpcId {
+		t.Error("Invalid private ip address")
+	}
+}
+
+func Test_FetchEICEndpointById(t *testing.T) {
+	var endpointId = "eice-1234567890"
+	var dnsName = "eice-1234567890.11111111.ec2-instance-connect-endpoint.ap-northeast-1.amazonaws.com"
+	var mock = &MockAPI{
+		DescribeInstanceConnectEndpointsOutput: &ec2.DescribeInstanceConnectEndpointsOutput{
+			InstanceConnectEndpoints: []types.Ec2InstanceConnectEndpoint{{
+				InstanceConnectEndpointId: &endpointId,
+				DnsName:                   &dnsName,
+			}},
+		},
+		Error: nil,
+	}
+	var result, err = FetchEICEndpointById(mock, context.Background(), endpointId)
+	if err != nil {
+		t.Error("Failed to get EIC Endpoint")
+	}
+	if result.EndpointId != endpointId {
+		t.Error("Invalid EIC Endpoint id")
+	}
+	if result.DnsName != dnsName {
+		t.Error("Invalid EIC Endpoint DNS name")
+	}
+	if result.FipsDnsName != "" {
+		t.Error("Invalid EIC Endpoint FIPS DNS name")
+	}
+}
+
+func Test_FetchEICEndpointByVpc(t *testing.T) {
+	var vpcId = "vpc-12345678"
+	var endpointId = "eice-1234567890"
+	var dnsName = "eice-1234567890.11111111.ec2-instance-connect-endpoint.ap-northeast-1.amazonaws.com"
+	var mock = &MockAPI{
+		DescribeInstanceConnectEndpointsOutput: &ec2.DescribeInstanceConnectEndpointsOutput{
+			InstanceConnectEndpoints: []types.Ec2InstanceConnectEndpoint{{
+				InstanceConnectEndpointId: &endpointId,
+				DnsName:                   &dnsName,
+			}},
+		},
+		Error: nil,
+	}
+	var result, err = FetchEICEndpointByVpc(mock, context.Background(), vpcId)
+	if err != nil {
+		t.Error("Failed to get EIC Endpoint")
+	}
+	if result.EndpointId != endpointId {
+		t.Error("Invalid EIC Endpoint id")
+	}
+	if result.DnsName != dnsName {
+		t.Error("Invalid EIC Endpoint DNS name")
+	}
+	if result.FipsDnsName != "" {
+		t.Error("Invalid EIC Endpoint FIPS DNS name")
 	}
 }
 

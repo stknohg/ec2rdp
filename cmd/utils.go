@@ -32,6 +32,17 @@ func isPortOpen(hostName string, port int) bool {
 	return true
 }
 
+func getLocalRDPPort(localHost string, startPort int) (int, error) {
+	for i := startPort; i <= 65535; i++ {
+		listener, err := net.Listen("tcp", net.JoinHostPort(localHost, strconv.Itoa(i)))
+		if err == nil {
+			defer listener.Close()
+			return i, nil
+		}
+	}
+	return 65535, fmt.Errorf("failed to find local proxy port")
+}
+
 func invokeRegionCompletion(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
 	// generate from : aws ec2 describe-regions --all-regions --query "sort_by(Regions,&RegionName)[].RegionName" --output json
 	regions := []string{
