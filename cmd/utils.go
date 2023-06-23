@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
 	"net"
 	"strconv"
@@ -8,6 +9,7 @@ import (
 	"time"
 
 	"github.com/spf13/cobra"
+	"github.com/stknohg/ec2rdp/internal/aws/ec2"
 	"golang.org/x/term"
 )
 
@@ -41,6 +43,21 @@ func getLocalRDPPort(localHost string, startPort int) (int, error) {
 		}
 	}
 	return 65535, fmt.Errorf("failed to find local proxy port")
+}
+
+func getAdministratorPasswordWithPrompt(ec2api ec2.EC2API, ctx context.Context, instanceId string, pemFile string, prompt bool) (string, string, error) {
+	if prompt {
+		password := readPrompt("Enter password:")
+		return password, "", nil
+	}
+	password, err := ec2.GetAdministratorPassword(ec2api, ctx, instanceId, pemFile)
+	if err != nil {
+		return "", "", err
+	}
+	if password == "" {
+		return "", "", fmt.Errorf("EC2 PasswordData is empty. Use --password flag instead")
+	}
+	return password, "Administrator password acquisition completed", nil
 }
 
 func invokeRegionCompletion(cmd *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {

@@ -96,7 +96,7 @@ func invokeEICECommand(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("instance %v is %v (status code=%d)", cpInstanceId, metadata.State.Name, *metadata.State.Code)
 	}
 
-	// get EC2 Insntance Endpoint information
+	// get EC2 Insntance Connect Endpoint information
 	var fetchResult *ec2.EICEndpointMetadata
 	if eiceEndpointId != "" {
 		fetchResult, err = ec2.FetchEICEndpointById(ec2api, ctx, eiceEndpointId)
@@ -108,23 +108,15 @@ func invokeEICECommand(cmd *cobra.Command, args []string) error {
 		if err != nil {
 			return err
 		}
-	}
-	if eiceEndpointId == "" {
-		fmt.Printf("Detect EC2 Connect Endpoint %v\n", fetchResult.EndpointId)
+		fmt.Printf("Find EC2 Instance Connect Endpoint %v in the VPC\n", fetchResult.EndpointId)
 	}
 	// get administrator password
-	var password string
-	if !cpUserPassword {
-		password, err = ec2.GetAdministratorPassword(ec2api, ctx, cpInstanceId, cpPemFile)
-		if err != nil {
-			return err
-		}
-		if password == "" {
-			return fmt.Errorf("EC2 PasswordData is empty. Use --password flag instead")
-		}
-		fmt.Println("Administrator password acquisition completed")
-	} else {
-		password = readPrompt("Enter password:")
+	password, message, err := getAdministratorPasswordWithPrompt(ec2api, ctx, cpInstanceId, cpPemFile, cpUserPassword)
+	if err != nil {
+		return err
+	}
+	if message != "" {
+		fmt.Println(message)
 	}
 
 	// get hostname and local port

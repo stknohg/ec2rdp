@@ -88,18 +88,12 @@ func invokeSSMCommand(cmd *cobra.Command, args []string) error {
 	}
 
 	// get administrator password
-	var password string
-	if !cpUserPassword {
-		password, err = ec2.GetAdministratorPassword(ec2api, ctx, cpInstanceId, cpPemFile)
-		if err != nil {
-			return err
-		}
-		if password == "" {
-			return fmt.Errorf("EC2 PasswordData is empty. Use --password flag instead")
-		}
-		fmt.Println("Administrator password acquisition completed")
-	} else {
-		password = readPrompt("Enter password:")
+	password, message, err := getAdministratorPasswordWithPrompt(ec2api, ctx, cpInstanceId, cpPemFile, cpUserPassword)
+	if err != nil {
+		return err
+	}
+	if message != "" {
+		fmt.Println(message)
 	}
 
 	// get hostname and local port
