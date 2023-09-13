@@ -12,7 +12,10 @@ builds:
     goarch:
       - amd64
       - arm64
+    flags:
+      - -trimpath
     ldflags:
+      - -w -s
       - -X "github.com/stknohg/ec2rdp/cmd.cmdVersion={{.Version}}"
 
 archives:
