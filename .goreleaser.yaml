@@ -44,7 +44,7 @@ changelog:
       - '^test:'
       - '^fix.{0,1}$'
 brews:
- - tap:
+ - repository:
     owner: stknohg
     name: homebrew-tap
     branch: main
