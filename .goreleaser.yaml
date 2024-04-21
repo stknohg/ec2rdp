@@ -52,4 +52,4 @@ brews:
    description: "Remote Desktop Utility for Amazon EC2."
    homepage: "https://github.com/stknohg/ec2rdp"
    license: "MIT"
-   folder: Formula
+   directory: Formula
