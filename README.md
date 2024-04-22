@@ -27,7 +27,19 @@ This tool assists you to easily connet to your EC2 instances with Remote Desktop
 
 Download `ec2rdp` binary and setup [AWS CLI credential file](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-files.html).  
 
-You can also use Homebrew Taps on macOS.
+### Windows
+
+You can use [Scoop](https://scoop.sh/) on Windows.
+
+```PowerShell
+# Windows only
+scoop bucket add stknohg https://github.com/stknohg/scoop-bucket
+scoop install ec2rdp
+```
+
+### macOS
+
+You can use Homebrew Taps on macOS.
 
 ```bash
 # macOS only

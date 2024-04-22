@@ -44,12 +44,26 @@ changelog:
       - '^test:'
       - '^fix.{0,1}$'
 brews:
- - repository:
-    owner: stknohg
-    name: homebrew-tap
-    branch: main
-    token: "{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"
-   description: "Remote Desktop Utility for Amazon EC2."
-   homepage: "https://github.com/stknohg/ec2rdp"
-   license: "MIT"
-   directory: Formula
+  - 
+    description: "Remote Desktop Utility for Amazon EC2."
+    homepage: "https://github.com/stknohg/ec2rdp"
+    license: "MIT"
+    directory: Formula
+    repository:
+      owner: stknohg
+      name: homebrew-tap
+      branch: main
+      token: "{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"
+scoops:
+  - 
+    description: "Remote Desktop Utility for Amazon EC2."
+    homepage: "https://github.com/stknohg/ec2rdp"
+    license: "MIT"
+    directory: bucket
+    url_template: "https://github.com/stknohg/ec2rdp/releases/download/{{ .Tag }}/{{ .ArtifactName }}"
+    shortcuts: [["ec2rdp.exe", "ec2rdp"]]
+    repository:
+      owner: stknohg
+      name: scoop-bucket
+      branch: main
+      token: "{{ .Env.SCOOP_BUCKET_GITHUB_TOKEN }}"
