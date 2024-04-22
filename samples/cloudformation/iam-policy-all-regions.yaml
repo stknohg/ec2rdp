@@ -2,7 +2,7 @@ AWSTemplateFormatVersion: 2010-09-09
 Description: "IAM policy for ec2rdp remote desktop connection."
 Parameters:
   PolicyName:
-    Description: "Input role name."
+    Description: "Input policy name."
     Type: String
     Default: "ec2rdp-connection-policy"
 Resources:
