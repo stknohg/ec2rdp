@@ -1,0 +1,51 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: "IAM policy for ec2rdp remote desktop connection."
+Parameters:
+  PolicyName:
+    Description: "Input role name."
+    Type: String
+    Default: "ec2rdp-connection-policy"
+Resources:
+  EC2RDPConnectionPolicy:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      Description: "Allow connect to EC2 instances with ec2rdp"
+      ManagedPolicyName:
+        Fn::Sub: "${PolicyName}"
+      Path: "/"
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Sid: "EC2InstancesAndEndpoints"
+            Effect: "Allow"
+            Action:
+              - "ec2:DescribeInstances"
+              - "ec2:DescribeInstanceConnectEndpoints"
+              - "ec2:GetPasswordData"
+            Resource: "*"
+          - Sid: "EICEOpenTunnel"
+            Effect: "Allow"
+            Action:
+              - "ec2-instance-connect:OpenTunnel"
+            Resource:
+              Fn::Sub: "arn:${AWS::Partition}:ec2:*:${AWS::AccountId}:instance-connect-endpoint/*"
+          - Sid: "SSMInstances"
+            Effect: "Allow"
+            Action:
+              - "ssm:DescribeInstanceInformation"
+            Resource:
+              Fn::Sub: "arn:${AWS::Partition}:ssm:*:${AWS::AccountId}:*"
+          - Sid: "SSMStartSession"
+            Effect: "Allow"
+            Action:
+              - "ssm:StartSession"
+            Resource:
+              - Fn::Sub: "arn:${AWS::Partition}:ec2:*:${AWS::AccountId}:instance/*"
+              - Fn::Sub: "arn:${AWS::Partition}:ssm:*::document/AWS-StartPortForwardingSession"
+          - Sid: "SSMTerminateSession"
+            Effect: "Allow"
+            Action:
+              - "ssm:TerminateSession"
+              - "ssm:ResumeSession"
+            Resource:
+              - Fn::Sub: "arn:${AWS::Partition}:ssm:*:${AWS::AccountId}:session/${!aws:username}-*"

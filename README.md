@@ -23,6 +23,8 @@ This tool assists you to easily connet to your EC2 instances with Remote Desktop
 * `ssm:TerminateSession`
 * `ec2-instance-connect:OpenTunnel`
 
+Sample IAM policies are [here](./samples/cloudformation/README.md).
+
 ## How to install
 
 Download [ec2rdp binary](https://github.com/stknohg/ec2rdp/releases/latest) and setup [AWS CLI credential file](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-files.html).  
