@@ -7,7 +7,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/config v1.27.23
 	github.com/aws/aws-sdk-go-v2/credentials v1.17.23
 	github.com/aws/aws-sdk-go-v2/service/ec2 v1.166.0
-	github.com/aws/aws-sdk-go-v2/service/ssm v1.51.1
+	github.com/aws/aws-sdk-go-v2/service/ssm v1.52.1
 	github.com/aws/smithy-go v1.20.3
 	github.com/danieljoos/wincred v1.2.1
 	github.com/hashicorp/go-version v1.7.0
