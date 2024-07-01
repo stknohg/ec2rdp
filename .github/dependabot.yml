@@ -6,3 +6,7 @@ updates:
       interval: "weekly"
       time: "12:00"
       timezone: "Asia/Tokyo"
+      groups:
+        dependencies:
+          patterns:
+            - "*"
