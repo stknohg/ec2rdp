@@ -4,10 +4,10 @@ go 1.22
 
 require (
 	github.com/aws/aws-sdk-go-v2 v1.30.4
-	github.com/aws/aws-sdk-go-v2/config v1.27.28
-	github.com/aws/aws-sdk-go-v2/credentials v1.17.28
-	github.com/aws/aws-sdk-go-v2/service/ec2 v1.175.1
-	github.com/aws/aws-sdk-go-v2/service/ssm v1.52.5
+	github.com/aws/aws-sdk-go-v2/config v1.27.30
+	github.com/aws/aws-sdk-go-v2/credentials v1.17.29
+	github.com/aws/aws-sdk-go-v2/service/ec2 v1.176.0
+	github.com/aws/aws-sdk-go-v2/service/ssm v1.52.6
 	github.com/aws/smithy-go v1.20.4
 	github.com/danieljoos/wincred v1.2.2
 	github.com/hashicorp/go-version v1.7.0
@@ -23,7 +23,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/internal/presigned-url v1.11.18 // indirect
 	github.com/aws/aws-sdk-go-v2/service/sso v1.22.5 // indirect
 	github.com/aws/aws-sdk-go-v2/service/ssooidc v1.26.5 // indirect
-	github.com/aws/aws-sdk-go-v2/service/sts v1.30.4 // indirect
+	github.com/aws/aws-sdk-go-v2/service/sts v1.30.5 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
