@@ -1,3 +1,5 @@
+# yaml-language-server: $schema=https://goreleaser.com/static/schema.json
+# vim: set ts=2 sw=2 tw=0 fo=cnqoj
 version: 2
 before:
   hooks:
@@ -16,7 +18,6 @@ builds:
     ldflags:
       - -w -s
       - -X "github.com/stknohg/ec2rdp/cmd.cmdVersion={{.Version}}"
-
 archives:
   - format: tar.gz
     # this name template makes the OS and Arch compatible with the results of uname.
