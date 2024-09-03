@@ -3,7 +3,7 @@
 ## Prerequisites
 
 * [Go](https://go.dev/) 1.23
-* [GoReleaser](https://goreleaser.com/) 1.25+
+* [GoReleaser](https://goreleaser.com/) 2.2.0+
 
 ## How to build
 
