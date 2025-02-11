@@ -68,7 +68,7 @@ func init() {
 	eiceCmd.RegisterFlagCompletionFunc("region", invokeRegionCompletion)
 }
 
-func invokeEICECommand(cmd *cobra.Command, args []string) error {
+func invokeEICECommand(_ *cobra.Command, _ []string) error {
 	// check if connector application installed
 	connector := connector.DefaultConnector{}
 	_, err := connector.IsInstalled()

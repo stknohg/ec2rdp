@@ -58,7 +58,7 @@ func init() {
 	publicCmd.RegisterFlagCompletionFunc("region", invokeRegionCompletion)
 }
 
-func invokePublicCommand(cmd *cobra.Command, args []string) error {
+func invokePublicCommand(_ *cobra.Command, _ []string) error {
 	// check if connector application installed
 	connector := connector.DefaultConnector{}
 	_, err := connector.IsInstalled()

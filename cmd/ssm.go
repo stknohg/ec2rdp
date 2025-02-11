@@ -61,7 +61,7 @@ func init() {
 	ssmCmd.RegisterFlagCompletionFunc("region", invokeRegionCompletion)
 }
 
-func invokeSSMCommand(cmd *cobra.Command, args []string) error {
+func invokeSSMCommand(_ *cobra.Command, _ []string) error {
 	// check if connector application installed
 	connector := connector.DefaultConnector{}
 	_, err := connector.IsInstalled()
