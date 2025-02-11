@@ -19,7 +19,7 @@ builds:
       - -w -s
       - -X "github.com/stknohg/ec2rdp/cmd.cmdVersion={{.Version}}"
 archives:
-  - format: tar.gz
+  - formats: [tar.gz]
     # this name template makes the OS and Arch compatible with the results of uname.
     name_template: >-
       {{ .ProjectName }}-
@@ -30,22 +30,21 @@ archives:
       {{- if .Arm }}v{{ .Arm }}{{ end }}
     # use zip for windows archives
     format_overrides:
-    - goos: windows
-      format: zip
+      - goos: windows
+        formats: [zip]
 checksum:
-  name_template: 'checksums.txt'
+  name_template: "checksums.txt"
 snapshot:
   version_template: "{{ incpatch .Version }}-next"
 changelog:
-  sort: 
+  sort:
   filters:
     exclude:
-      - '^docs:'
-      - '^test:'
-      - '^fix.{0,1}$'
+      - "^docs:"
+      - "^test:"
+      - "^fix.{0,1}$"
 brews:
-  - 
-    description: "Remote Desktop Utility for Amazon EC2."
+  - description: "Remote Desktop Utility for Amazon EC2."
     homepage: "https://github.com/stknohg/ec2rdp"
     license: "MIT"
     directory: Formula
@@ -55,8 +54,7 @@ brews:
       branch: main
       token: "{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"
 scoops:
-  - 
-    description: "Remote Desktop Utility for Amazon EC2."
+  - description: "Remote Desktop Utility for Amazon EC2."
     homepage: "https://github.com/stknohg/ec2rdp"
     license: "MIT"
     directory: bucket
