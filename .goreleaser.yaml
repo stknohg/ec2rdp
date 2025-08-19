@@ -37,17 +37,16 @@ checksum:
 snapshot:
   version_template: "{{ incpatch .Version }}-next"
 changelog:
-  sort:
+  sort: asc
   filters:
     exclude:
       - "^docs:"
       - "^test:"
       - "^fix.{0,1}$"
-brews:
+homebrew_casks:
   - description: "Remote Desktop Utility for Amazon EC2."
     homepage: "https://github.com/stknohg/ec2rdp"
     license: "MIT"
-    directory: Formula
     repository:
       owner: stknohg
       name: homebrew-tap
